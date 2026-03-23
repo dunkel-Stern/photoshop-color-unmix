@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Color Unmix</title>
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #2c2c2c;
+      color: #ececec;
+      font-family: Arial, sans-serif;
+      font-size: 12px;
+      line-height: 1.2;
+    }
+
+    * { box-sizing: border-box; }
+
+    #app {
+      height: 100vh;
+      overflow-y: auto;
+      padding: 4px;
+      background: #2c2c2c;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .title {
+      font-size: 13px;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .intro {
+      font-size: 11px;
+      color: #d5d5d5;
+      margin: 0;
+    }
+
+    .section {
+      border: 1px solid #4b4b4b;
+      border-radius: 4px;
+      background: #333333;
+      overflow: hidden;
+    }
+
+    .sectionHeader {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 7px;
+      background: #333333;
+      color: #f0f0f0;
+      border: 0;
+      text-align: left;
+      cursor: pointer;
+      min-height: 28px;
+    }
+
+    .sectionHeader:hover { background: #373737; }
+
+    .sectionTitle {
+      font-weight: 700;
+      flex: 0 0 auto;
+    }
+
+    .sectionMeta {
+      flex: 1 1 auto;
+      text-align: right;
+      color: #cfcfcf;
+      font-size: 11px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .chev {
+      flex: 0 0 auto;
+      width: 10px;
+      text-align: center;
+      color: #bdbdbd;
+      font-size: 10px;
+      transition: transform 0.12s ease;
+    }
+
+    .sectionBody {
+      padding: 6px 7px 7px 7px;
+      border-top: 1px solid #454545;
+    }
+
+    .collapsed .sectionBody { display: none; }
+    .collapsed .chev { transform: rotate(-90deg); }
+
+    .field { margin-top: 5px; }
+    .field:first-child { margin-top: 0; }
+
+    label {
+      display: block;
+      margin: 0 0 2px 0;
+      font-size: 11px;
+      color: #ececec;
+    }
+
+    .miniField label {
+      font-size: 10px;
+      color: #d5d5d5;
+      margin-bottom: 2px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="range"],
+    button {
+      width: 100%;
+      border: 1px solid #5d5d5d;
+      border-radius: 3px;
+      background: #242424;
+      color: #f1f1f1;
+      font-size: 12px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    button {
+      min-height: 24px;
+      padding: 4px 6px;
+    }
+
+    input[type="range"] {
+      height: 20px;
+      padding: 0;
+      margin: 0;
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    button.secondary {
+      font-weight: 400;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .grow { flex: 1 1 auto; }
+    .w64 { width: 64px; flex: 0 0 64px; }
+    .w70 { width: 70px; flex: 0 0 70px; }
+
+    .swatch {
+      width: 22px;
+      height: 22px;
+      flex: 0 0 22px;
+      border: 1px solid #666;
+      border-radius: 3px;
+      background: #fff;
+    }
+
+    .grid3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 4px;
+      margin-top: 4px;
+    }
+
+    .muted {
+      margin-top: 4px;
+      color: #bdbdbd;
+      font-size: 10px;
+      line-height: 1.25;
+    }
+
+    .statusBox {
+      margin-top: 4px;
+      min-height: 12px;
+      font-size: 10px;
+      color: #d5d5d5;
+      white-space: pre-wrap;
+      line-height: 1.2;
+    }
+
+    .runSection .sectionBody {
+      border-top: 0;
+      padding-top: 7px;
+    }
+
+    .compactBtns {
+      display: flex;
+      gap: 4px;
+      margin-top: 5px;
+    }
+
+    .compactBtns button {
+      flex: 1 1 auto;
+    }
+
+    .footer {
+      margin-top: auto;
+      padding: 4px 2px 2px 2px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #c8c8c8;
+      font-size: 11px;
+      border-top: 1px solid #474747;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="title">Color Unmix</div>
+    <div class="intro">Remove one flat color into real pixel transparency.</div>
+
+    <div class="section runSection" id="runSection">
+      <div class="sectionBody">
+        <div class="compactBtns">
+          <button id="runBtn" type="button">Run Color Unmix</button>
+          <button id="maskBtn" type="button" class="secondary">Mask from transparency</button>
+        </div>
+        <div id="status" class="statusBox">Idle.</div>
+      </div>
+    </div>
+
+    <div class="section collapsed" id="docSection">
+      <button class="sectionHeader" type="button" data-toggle="docSection">
+        <span class="sectionTitle">Document</span>
+        <span class="sectionMeta" id="docMeta">Checking...</span>
+        <span class="chev">▾</span>
+      </button>
+      <div class="sectionBody">
+        <div id="docInfo" class="muted" style="margin-top:0;font-size:11px;color:#d9d9d9;"></div>
+        <div class="compactBtns">
+          <button id="refreshBtn" type="button" class="secondary">Refresh</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="targetSection">
+      <button class="sectionHeader" type="button" data-toggle="targetSection">
+        <span class="sectionTitle">Target color</span>
+        <span class="sectionMeta" id="targetMeta">RGB #FFFFFF</span>
+        <span class="chev">▾</span>
+      </button>
+      <div class="sectionBody">
+        <div class="field">
+          <label>RGB / Hex</label>
+          <div class="row">
+            <div id="miniSwatch" class="swatch" title="Current target color"></div>
+            <button id="useFgBtn" type="button" class="secondary w64">Use FG</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="hexInput">Hex</label>
+          <input id="hexInput" type="text" value="#FFFFFF" />
+          <div class="grid3">
+            <div class="miniField">
+              <label for="rInput">R</label>
+              <input id="rInput" type="number" min="0" max="255" step="1" value="255" />
+            </div>
+            <div class="miniField">
+              <label for="gInput">G</label>
+              <input id="gInput" type="number" min="0" max="255" step="1" value="255" />
+            </div>
+            <div class="miniField">
+              <label for="bInput">B</label>
+              <input id="bInput" type="number" min="0" max="255" step="1" value="255" />
+            </div>
+          </div>
+          <div class="muted">Examples: #FFFFFF, #F4E8D2, #00A7FF</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section collapsed" id="rangeSection">
+      <button class="sectionHeader" type="button" data-toggle="rangeSection">
+        <span class="sectionTitle">Range</span>
+        <span class="sectionMeta" id="rangeMeta">0%</span>
+        <span class="chev">▾</span>
+      </button>
+      <div class="sectionBody">
+        <div class="field">
+          <label for="toleranceRange">Tolerance %</label>
+          <div class="row">
+            <input id="toleranceRange" type="range" min="0" max="100" step="0.1" value="0" class="grow" />
+            <input id="tolerancePct" type="number" min="0" max="100" step="0.1" value="0" class="w70" />
+          </div>
+          <div class="muted">0 means exact target only. Higher values pull nearby casts toward the target before unmixing.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span>made by T.Podroushnyack</span>
+      <span>v1.9.4</span>
+    </div>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>
