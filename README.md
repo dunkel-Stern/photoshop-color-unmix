@@ -1,25 +1,31 @@
-# photoshop-color-unmix
-Photoshop UXP plugin to remove white or any color into real transparency with adjustable tolerance.
+![UI](screenshot.png)
 
 # Color Unmix (Photoshop UXP Plugin)
 
-Remove a flat color (white or any RGB color) into real transparency.
+Remove white or any flat RGB color from an image and convert it into real transparency.
+
+## What it does
+Useful for:
+- removing white backgrounds
+- cleaning color casts from edges
+- extracting assets without manual masking
 
 ## Features
-- Remove white or custom color
-- Adjustable tolerance
-- Works on raster layers
-- Convert transparency to mask
+- Remove white or any RGB color
+- Adjustable tolerance (controls how aggressive the removal is)
+- Works directly on raster layers
+- Optional: convert transparency to layer mask
 
 ## Installation
-1. Open Adobe UXP Developer Tool
-2. Load the plugin folder
+1. Download the `.ccx` file from Releases
+2. Double-click to install via Creative Cloud
+3. Open Photoshop → Plugins → Color Unmix
 
 ## Usage
-- Select a layer
-- Choose color
-- Click "Run Color Unmix"
-- Optional: "Mask from transparency"
+1. Select a raster layer
+2. Choose target color (default is white)
+3. Click **Run Color Unmix**
+4. Optional: click **Mask from transparency**
 
 ## Author
 T. Podroushnyack
