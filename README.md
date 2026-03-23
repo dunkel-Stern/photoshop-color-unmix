@@ -2,9 +2,9 @@
 
 # Color Unmix (Photoshop UXP Plugin)
 
-Works best on images with flat backgrounds, for example white studio shots.
+Works best on images with flat or near-flat light backgrounds.
 
-Remove a flat background color, like white, by converting it into real transparency using color unmixing.
+Remove a flat background color, such as white or another light studio background, by converting it into real transparency using color unmixing.
 
 ## What this plugin does
 
@@ -12,13 +12,15 @@ This plugin removes a known flat color from an image and converts it into transp
 
 It is based on mathematical color unmixing, not AI or subject detection.
 
+Its main strength is preserving baked-in shadow, color bleed, and soft edge variation as usable transparency for PNG, WebP, and other composited assets.
+
 ## What it is NOT
 
 This is not automatic background removal.
 
 - It does not detect subjects
 - It does not work on complex or mixed backgrounds
-- It assumes a flat, uniform background color
+- It assumes a flat or near-flat known background color
 - It is not a replacement for Photoshop masking tools on arbitrary images
 
 If your image has a complex background, use Photoshop selection and masking tools instead.
@@ -32,7 +34,7 @@ Unlike typical masking or threshold-based removal, this plugin can preserve:
 - color bleed
 - semi-transparent transitions
 
-This makes it useful for compositing assets onto different backgrounds without the usual white halo problem.
+This makes it useful when you want transparency that still carries the baked-in light interaction from the original setup.
 
 ## Recommended shadow workflow
 
@@ -145,11 +147,13 @@ So this workflow improves control, but it does not fully solve that limitation i
 
 ## Best use cases
 
-- product images on white background
-- soft shadow extraction
-- logos and UI assets on flat backgrounds
-- cleaning white halos from edge pixels
-- preparing assets for manual compositing
+- flat or near-flat light backgrounds
+- preserving baked-in color bleed in transparency
+- preserving soft shadow color variation
+- preparing PNG or WebP assets with usable semi-transparent shadow and edge information
+- logos, objects, and assets that need to be composited onto different backgrounds
+- cleaning white or light background halos from edge pixels
+- extracting shadow and color-contribution layers for manual compositing
 
 ## Features
 
