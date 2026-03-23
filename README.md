@@ -1,4 +1,4 @@
-![UI](screenshot.png)
+<img src="screenshot.png" width="600">
 
 # Color Unmix (Photoshop UXP Plugin)
 
