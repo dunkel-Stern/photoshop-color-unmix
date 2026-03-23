@@ -62,6 +62,8 @@ Example:
 
 the shadow may turn into an unnatural light cast instead of looking physically correct.
 
+This can already be seen in the raw result on black in Example 5, and it can still remain visible even after compositing with a clean masked object layer, as shown in Example 7.
+
 For this reason, the plugin works best when:
 
 - the background is flat and known
@@ -79,34 +81,67 @@ It removes a known flat background color into transparency, which is especially 
 
 <img src="demo/demo-01-original.jpg" width="700">
 
-### 2. After Color Unmix on the original white background
+### 2. Color Unmix result on the original white background
 
 <img src="demo/demo-02-after-on-white.jpg" width="700">
 
-This shows that the result stays visually close to the original on the source background.
+On the original white background, the result should look nearly identical to the source image.
 
-### 3. Raw Color Unmix result on a 50% gray background
+This is expected.
 
-<img src="demo/demo-03-after-on-gray.jpg" width="700">
+Color Unmix is not meant to visibly change the image on its original flat background.  
+Its purpose is to convert that background color into transparency, so the image can be reused on other backgrounds while preserving extracted shadow and color-contribution information.
 
-### 4. Raw Color Unmix result on a black background
+### 3. Color Unmix result on transparency
 
-<img src="demo/demo-04-after-on-black.jpg" width="700">
+<img src="demo/demo-03-after-on-transparency.jpg" width="700">
 
-These examples show the raw transparency result by itself.  
-This can preserve useful shadow and color contribution information, but it can also produce unnatural light casts on darker backgrounds when the original shadow contains light-tinted information from the source background.
+This shows the extracted transparency directly, before placing the result on a new background.
 
-### 5. Recommended workflow on 50% gray:
+It makes the semi-transparent structure more visible:
+- preserved soft shadow information
+- preserved semi-transparent edge detail
+- preserved color contribution from the original background interaction
+
+### 4. Raw Color Unmix result on a 50% gray background
+
+<img src="demo/demo-04-after-on-gray.jpg" width="700">
+
+On a different background, the extracted transparency starts to become visible.
+
+This shows what the Color Unmix result contains by itself:
+- preserved shadow contribution
+- preserved color contribution
+- preserved semi-transparent edge information
+
+This is useful for compositing, but it is not the same as a finished clean cutout.
+
+### 5. Raw Color Unmix result on a black background
+
+<img src="demo/demo-05-after-on-black.jpg" width="700">
+
+A dark background is a stress test for the raw Color Unmix result.
+
+This makes the extracted shadow and color contribution much more obvious, but it also shows an important limitation:
+light-tinted shadow or reflection information from the original background can turn into unnatural light cast on darker backgrounds.
+
+### 6. Composited workflow on 50% gray:
 clean masked object layer on top, Color Unmix result used as shadow and color contribution layer underneath
 
-<img src="demo/demo-05-gray-with-clean-object-layer.jpg" width="700">
+<img src="demo/demo-06-gray-with-clean-object-layer.jpg" width="700">
 
-### 6. Recommended workflow on black:
+This shows the practical workflow for a more controlled final result:
+the clean object is separated from the unmix layer, while the unmix layer is used mainly to preserve shadow and color contribution.
+
+### 7. Composited workflow on black:
 clean masked object layer on top, Color Unmix result used as shadow and color contribution layer underneath
 
-<img src="demo/demo-06-black-with-clean-object-layer.jpg" width="700">
+<img src="demo/demo-07-black-with-clean-object-layer.jpg" width="700">
 
-This is the recommended way to use the plugin when you want clean object edges together with preserved soft shadows or color bleed.
+This example shows that even with the composited workflow, darker backgrounds can still reveal a limitation of the method:
+if the extracted shadow contains light-tinted contribution from the original background, it can still look unnaturally bright.
+
+So this workflow improves control, but it does not fully solve that limitation in every case.
 
 ## Best use cases
 
