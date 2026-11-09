@@ -1,12 +1,12 @@
 {
   "manifestVersion": 5,
   "id": "com.timos.whiteunmixtransparency",
-  "name": "Color Unmix Transparency",
-  "version": "1.9.4",
+  "name": "Color Unmix",
+  "version": "2.0.0",
   "main": "index.html",
   "host": {
     "app": "PS",
-    "minVersion": "24.2.0",
+    "minVersion": "24.4.0",
     "data": {
       "apiVersion": 2
     }
@@ -16,16 +16,9 @@
       "width": 48,
       "height": 48,
       "path": "icons/pluginIcon.png",
-      "scale": [
-        1,
-        2
-      ],
-      "theme": [
-        "all"
-      ],
-      "species": [
-        "generic"
-      ]
+      "scale": [1, 2],
+      "theme": ["all"],
+      "species": ["generic"]
     }
   ],
   "entrypoints": [
@@ -40,33 +33,26 @@
           "width": 23,
           "height": 23,
           "path": "icons/panelIcon.png",
-          "scale": [
-            1,
-            2
-          ],
-          "theme": [
-            "all"
-          ],
-          "species": [
-            "generic"
-          ]
+          "scale": [1, 2],
+          "theme": ["all"],
+          "species": ["generic"]
         }
       ],
       "minimumSize": {
-        "width": 240,
-        "height": 160
+        "width": 260,
+        "height": 420
       },
       "maximumSize": {
         "width": 2000,
         "height": 2000
       },
       "preferredDockedSize": {
-        "width": 280,
-        "height": 380
+        "width": 300,
+        "height": 560
       },
       "preferredFloatingSize": {
-        "width": 290,
-        "height": 420
+        "width": 320,
+        "height": 600
       }
     }
   ]

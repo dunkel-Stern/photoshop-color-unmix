@@ -4,16 +4,28 @@
   <meta charset="UTF-8" />
   <title>Color Unmix</title>
   <style>
+    :root {
+      --bg: #323232;
+      --surface: #3a3a3a;
+      --border: #4f4f4f;
+      --text: #f0f0f0;
+      --muted: #b8b8b8;
+      --ok: #3daa6d;
+      --warn: #d9a441;
+      --err: #e36c6c;
+      --gap: 10px;
+      --radius: 6px;
+    }
+
     html, body {
       margin: 0;
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #2c2c2c;
-      color: #ececec;
-      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "adobe-clean", "Source Sans Pro", Arial, sans-serif;
       font-size: 12px;
-      line-height: 1.2;
     }
 
     * { box-sizing: border-box; }
@@ -21,286 +33,305 @@
     #app {
       height: 100vh;
       overflow-y: auto;
-      padding: 4px;
-      background: #2c2c2c;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap);
+      background: var(--bg);
+    }
+
+    .hero {
       display: flex;
       flex-direction: column;
       gap: 4px;
     }
 
-    .title {
-      font-size: 13px;
-      font-weight: 700;
+    .hero h1 {
       margin: 0;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
     }
 
-    .intro {
+    .hero p {
+      margin: 0;
+      color: var(--muted);
       font-size: 11px;
-      color: #d5d5d5;
-      margin: 0;
+      line-height: 1.35;
     }
 
-    .section {
-      border: 1px solid #4b4b4b;
-      border-radius: 4px;
-      background: #333333;
-      overflow: hidden;
-    }
-
-    .sectionHeader {
-      width: 100%;
+    .ready {
       display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 7px;
-      background: #333333;
-      color: #f0f0f0;
-      border: 0;
-      text-align: left;
-      cursor: pointer;
-      min-height: 28px;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
     }
 
-    .sectionHeader:hover { background: #373737; }
-
-    .sectionTitle {
-      font-weight: 700;
+    .ready-dot {
+      width: 8px;
+      height: 8px;
+      margin-top: 4px;
+      border-radius: 50%;
+      background: var(--warn);
       flex: 0 0 auto;
     }
 
-    .sectionMeta {
+    .ready[data-state="ready"] .ready-dot { background: var(--ok); }
+    .ready[data-state="blocked"] .ready-dot { background: var(--err); }
+    .ready[data-state="idle"] .ready-dot { background: var(--warn); }
+
+    .ready-copy {
       flex: 1 1 auto;
-      text-align: right;
-      color: #cfcfcf;
-      font-size: 11px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      min-width: 0;
     }
 
-    .chev {
-      flex: 0 0 auto;
-      width: 10px;
-      text-align: center;
-      color: #bdbdbd;
-      font-size: 10px;
-      transition: transform 0.12s ease;
-    }
-
-    .sectionBody {
-      padding: 6px 7px 7px 7px;
-      border-top: 1px solid #454545;
-    }
-
-    .collapsed .sectionBody { display: none; }
-    .collapsed .chev { transform: rotate(-90deg); }
-
-    .field { margin-top: 5px; }
-    .field:first-child { margin-top: 0; }
-
-    label {
-      display: block;
-      margin: 0 0 2px 0;
-      font-size: 11px;
-      color: #ececec;
-    }
-
-    .miniField label {
-      font-size: 10px;
-      color: #d5d5d5;
-      margin-bottom: 2px;
-    }
-
-    input[type="text"],
-    input[type="number"],
-    input[type="range"],
-    button {
-      width: 100%;
-      border: 1px solid #5d5d5d;
-      border-radius: 3px;
-      background: #242424;
-      color: #f1f1f1;
+    .ready-title {
+      font-weight: 600;
       font-size: 12px;
+      margin: 0 0 2px 0;
     }
 
-    input[type="text"],
-    input[type="number"],
-    button {
-      min-height: 24px;
-      padding: 4px 6px;
-    }
-
-    input[type="range"] {
-      height: 20px;
-      padding: 0;
+    .ready-detail {
       margin: 0;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.3;
+      white-space: pre-wrap;
     }
 
-    button {
-      cursor: pointer;
+    .card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .card-title {
+      margin: 0;
+      font-size: 11px;
       font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
     }
 
-    button.secondary {
-      font-weight: 400;
-    }
-
-    .row {
+    .color-row {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 8px;
     }
-
-    .grow { flex: 1 1 auto; }
-    .w64 { width: 64px; flex: 0 0 64px; }
-    .w70 { width: 70px; flex: 0 0 70px; }
 
     .swatch {
-      width: 22px;
-      height: 22px;
-      flex: 0 0 22px;
-      border: 1px solid #666;
-      border-radius: 3px;
+      width: 28px;
+      height: 28px;
+      flex: 0 0 28px;
+      border-radius: 4px;
+      border: 1px solid #6a6a6a;
       background: #fff;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
     }
 
-    .grid3 {
+    .hex-wrap {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .rgb-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 4px;
-      margin-top: 4px;
+      gap: 6px;
     }
 
-    .muted {
-      margin-top: 4px;
-      color: #bdbdbd;
-      font-size: 10px;
-      line-height: 1.25;
+    .field label,
+    .slider-head {
+      display: block;
+      margin: 0 0 4px 0;
+      font-size: 11px;
+      color: var(--text);
     }
 
-    .statusBox {
-      margin-top: 4px;
-      min-height: 12px;
-      font-size: 10px;
-      color: #d5d5d5;
-      white-space: pre-wrap;
-      line-height: 1.2;
-    }
-
-    .runSection .sectionBody {
-      border-top: 0;
-      padding-top: 7px;
-    }
-
-    .compactBtns {
+    .slider-head {
       display: flex;
-      gap: 4px;
-      margin-top: 5px;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
     }
 
-    .compactBtns button {
-      flex: 1 1 auto;
+    .slider-head span {
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
     }
+
+    .hint {
+      margin: 0;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.35;
+    }
+
+    .presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .preset {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: #2f2f2f;
+      color: var(--text);
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 11px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .preset:hover {
+      border-color: #6a6a6a;
+      background: #353535;
+    }
+
+    .preset-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 0, 0, 0.35);
+    }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .status {
+      min-height: 28px;
+      padding: 8px 10px;
+      border-radius: var(--radius);
+      background: #2a2a2a;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.35;
+      white-space: pre-wrap;
+    }
+
+    .status[data-tone="ok"] { color: #d7f0e1; border-color: #3f6f52; }
+    .status[data-tone="error"] { color: #f6d4d4; border-color: #7a4242; }
+    .status[data-tone="busy"] { color: #efe3c5; border-color: #7a6432; }
 
     .footer {
       margin-top: auto;
-      padding: 4px 2px 2px 2px;
+      padding-top: 4px;
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      color: #c8c8c8;
-      font-size: 11px;
-      border-top: 1px solid #474747;
+      gap: 8px;
+      color: #9f9f9f;
+      font-size: 10px;
+    }
+
+    sp-textfield, sp-slider, sp-button {
+      width: 100%;
+    }
+
+    sp-button[quiet] {
+      width: auto;
+    }
+
+    .color-row sp-button {
+      width: auto;
+      flex: 0 0 auto;
     }
   </style>
 </head>
 <body>
   <div id="app">
-    <div class="title">Color Unmix</div>
-    <div class="intro">Remove one flat color into real pixel transparency.</div>
-
-    <div class="section runSection" id="runSection">
-      <div class="sectionBody">
-        <div class="compactBtns">
-          <button id="runBtn" type="button">Run Color Unmix</button>
-          <button id="maskBtn" type="button" class="secondary">Mask from transparency</button>
-        </div>
-        <div id="status" class="statusBox">Idle.</div>
-      </div>
+    <div class="hero">
+      <h1>Color Unmix</h1>
+      <p>Turn a flat background color into real transparency — shadows and soft edges stay useful for compositing.</p>
     </div>
 
-    <div class="section collapsed" id="docSection">
-      <button class="sectionHeader" type="button" data-toggle="docSection">
-        <span class="sectionTitle">Document</span>
-        <span class="sectionMeta" id="docMeta">Checking...</span>
-        <span class="chev">▾</span>
-      </button>
-      <div class="sectionBody">
-        <div id="docInfo" class="muted" style="margin-top:0;font-size:11px;color:#d9d9d9;"></div>
-        <div class="compactBtns">
-          <button id="refreshBtn" type="button" class="secondary">Refresh</button>
-        </div>
+    <div id="readyBox" class="ready" data-state="idle">
+      <div class="ready-dot" aria-hidden="true"></div>
+      <div class="ready-copy">
+        <p id="readyTitle" class="ready-title">Checking document…</p>
+        <p id="readyDetail" class="ready-detail">Open an RGB document and select one unlocked pixel layer.</p>
       </div>
+      <sp-button id="refreshBtn" variant="secondary" quiet size="s">Refresh</sp-button>
     </div>
 
-    <div class="section" id="targetSection">
-      <button class="sectionHeader" type="button" data-toggle="targetSection">
-        <span class="sectionTitle">Target color</span>
-        <span class="sectionMeta" id="targetMeta">RGB #FFFFFF</span>
-        <span class="chev">▾</span>
-      </button>
-      <div class="sectionBody">
-        <div class="field">
-          <label>RGB / Hex</label>
-          <div class="row">
-            <div id="miniSwatch" class="swatch" title="Current target color"></div>
-            <button id="useFgBtn" type="button" class="secondary w64">Use FG</button>
-          </div>
-        </div>
+    <div class="card">
+      <p class="card-title">Color to remove</p>
 
-        <div class="field">
+      <div class="color-row">
+        <div id="miniSwatch" class="swatch" title="Target color"></div>
+        <div class="hex-wrap field">
           <label for="hexInput">Hex</label>
-          <input id="hexInput" type="text" value="#FFFFFF" />
-          <div class="grid3">
-            <div class="miniField">
-              <label for="rInput">R</label>
-              <input id="rInput" type="number" min="0" max="255" step="1" value="255" />
-            </div>
-            <div class="miniField">
-              <label for="gInput">G</label>
-              <input id="gInput" type="number" min="0" max="255" step="1" value="255" />
-            </div>
-            <div class="miniField">
-              <label for="bInput">B</label>
-              <input id="bInput" type="number" min="0" max="255" step="1" value="255" />
-            </div>
-          </div>
-          <div class="muted">Examples: #FFFFFF, #F4E8D2, #00A7FF</div>
+          <sp-textfield id="hexInput" value="#FFFFFF" placeholder="#FFFFFF"></sp-textfield>
         </div>
+        <sp-button id="useFgBtn" variant="secondary" size="s">From FG</sp-button>
+      </div>
+
+      <div class="rgb-grid">
+        <div class="field">
+          <label for="rInput">R</label>
+          <sp-textfield id="rInput" type="number" value="255"></sp-textfield>
+        </div>
+        <div class="field">
+          <label for="gInput">G</label>
+          <sp-textfield id="gInput" type="number" value="255"></sp-textfield>
+        </div>
+        <div class="field">
+          <label for="bInput">B</label>
+          <sp-textfield id="bInput" type="number" value="255"></sp-textfield>
+        </div>
+      </div>
+
+      <div class="presets" aria-label="Quick colors">
+        <button type="button" class="preset" data-hex="#FFFFFF">
+          <span class="preset-dot" style="background:#fff"></span>White
+        </button>
+        <button type="button" class="preset" data-hex="#F5F5F5">
+          <span class="preset-dot" style="background:#f5f5f5"></span>Soft white
+        </button>
+        <button type="button" class="preset" data-hex="#F4E8D2">
+          <span class="preset-dot" style="background:#f4e8d2"></span>Warm paper
+        </button>
+        <button type="button" class="preset" data-hex="#000000">
+          <span class="preset-dot" style="background:#000"></span>Black
+        </button>
       </div>
     </div>
 
-    <div class="section collapsed" id="rangeSection">
-      <button class="sectionHeader" type="button" data-toggle="rangeSection">
-        <span class="sectionTitle">Range</span>
-        <span class="sectionMeta" id="rangeMeta">0%</span>
-        <span class="chev">▾</span>
-      </button>
-      <div class="sectionBody">
-        <div class="field">
-          <label for="toleranceRange">Tolerance %</label>
-          <div class="row">
-            <input id="toleranceRange" type="range" min="0" max="100" step="0.1" value="0" class="grow" />
-            <input id="tolerancePct" type="number" min="0" max="100" step="0.1" value="0" class="w70" />
-          </div>
-          <div class="muted">0 means exact target only. Higher values pull nearby casts toward the target before unmixing.</div>
-        </div>
+    <div class="card">
+      <p class="card-title">Tolerance</p>
+      <div class="slider-head">
+        <label for="toleranceRange">Nearby color pull-in</label>
+        <span id="rangeMeta">0%</span>
       </div>
+      <sp-slider id="toleranceRange" min="0" max="100" step="0.1" value="0" variant="filled"></sp-slider>
+      <p class="hint">Keep at 0% for an exact match. Raise it only if the background has mild color casts or noise.</p>
     </div>
+
+    <div class="actions">
+      <sp-button id="runBtn" variant="cta">Remove color</sp-button>
+      <sp-button id="maskBtn" variant="secondary">Make mask from transparency</sp-button>
+    </div>
+
+    <div id="status" class="status" data-tone="idle">Ready when your layer is.</div>
 
     <div class="footer">
-      <span>made by T.Podroushnyack</span>
-      <span>v1.9.4</span>
+      <span>by T. Podroushnyack</span>
+      <span>v2.0.0</span>
     </div>
   </div>
 

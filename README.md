@@ -157,24 +157,43 @@ So this workflow improves control, but it does not fully solve that limitation i
 
 ## Features
 
-- Remove white or any RGB color
-- Adjustable tolerance
-- Works on raster layers
-- Optional: convert transparency to layer mask
+- Remove white or any RGB color into real transparency
+- Adjustable tolerance for mild background casts
+- Quick presets + sample Photoshop foreground color
+- Works on unlocked normal raster layers (RGB documents)
+- Optional: convert transparency to a layer mask
+- Clear ready / blocked guidance in the panel
+
+## Requirements
+
+- Adobe Photoshop **24.4** or newer (Imaging API)
+- RGB Color document mode
+- One unlocked normal pixel layer (not Background / smart object / group)
 
 ## Installation
+
+### From a release
 
 1. Download the `.ccx` file from Releases
 2. Double-click to install via Creative Cloud
 3. Open Photoshop → Plugins → Color Unmix
 
+### Load for development (UXP Developer Tool)
+
+1. Enable Developer Mode in the UXP Developer Tools
+2. Add this plugin folder
+3. Load / reload the plugin in Photoshop
+
 ## Usage
 
-1. Select a raster layer
-2. Choose target color, default is white
-3. Click **Run Color Unmix**
-4. Optional: click **Mask from transparency**
+1. Open an RGB document and select one unlocked pixel layer
+2. Pick the background color (Hex, RGB, preset, or **From FG**)
+3. Optionally raise **Tolerance** if the background isn’t a perfect flat color
+4. Click **Remove color**
+5. Optional: click **Make mask from transparency**
 
 ## Author
 
 T. Podroushnyack
+
+UI refresh contributions welcome via pull request.

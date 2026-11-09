@@ -13,9 +13,28 @@ function clamp8(v) {
   return clamp(Math.round(v), 0, 255);
 }
 
-function setStatus(msg) {
+function fieldValue(el) {
+  if (!el) return "";
+  if (el.value !== undefined && el.value !== null) return String(el.value);
+  return String(el.getAttribute("value") || "");
+}
+
+function setFieldValue(el, value) {
+  if (!el) return;
+  const next = String(value);
+  el.value = next;
+  try {
+    el.setAttribute("value", next);
+  } catch (err) {
+    // Attribute write can fail on some Spectrum hosts; property is enough.
+  }
+}
+
+function setStatus(msg, tone = "idle") {
   const el = $("status");
-  if (el) el.textContent = msg;
+  if (!el) return;
+  el.textContent = msg;
+  el.dataset.tone = tone;
 }
 
 function normalizeHex(hex) {
@@ -25,7 +44,7 @@ function normalizeHex(hex) {
     s = `#${s[1]}${s[1]}${s[2]}${s[2]}${s[3]}${s[3]}`;
   }
   if (!/^#[0-9a-fA-F]{6}$/.test(s)) {
-    throw new Error("Hex color must be 3 or 6 hex digits.");
+    throw new Error("Enter a hex color like #FFFFFF.");
   }
   return s.toUpperCase();
 }
@@ -80,85 +99,74 @@ function isSupportedLayer(layer) {
     !layer.allLocked;
 }
 
-function syncToleranceInputs(from) {
-  if (from === "range") {
-    $("tolerancePct").value = $("toleranceRange").value;
-  } else {
-    const v = clamp(Number($("tolerancePct").value || 0), 0, 100);
-    $("tolerancePct").value = String(v);
-    $("toleranceRange").value = String(v);
-  }
-  updateRangeMeta();
+function getTolerancePct() {
+  return clamp(Number(fieldValue($("toleranceRange")) || 0), 0, 100);
+}
+
+function updateRangeMeta() {
+  const pct = getTolerancePct();
+  const pretty = Number.isInteger(pct) ? String(pct) : pct.toFixed(1);
+  $("rangeMeta").textContent = `${pretty}%`;
 }
 
 function syncRGBFromHex(forceNormalize = false) {
-  const parsed = tryParseCompleteHex($("hexInput").value);
+  const parsed = tryParseCompleteHex(fieldValue($("hexInput")));
   if (!parsed) {
     if (forceNormalize) {
-      throw new Error("Hex color must be 3 or 6 hex digits.");
+      throw new Error("Enter a hex color like #FFFFFF.");
     }
     return false;
   }
 
-  $("rInput").value = String(parsed.r);
-  $("gInput").value = String(parsed.g);
-  $("bInput").value = String(parsed.b);
+  setFieldValue($("rInput"), parsed.r);
+  setFieldValue($("gInput"), parsed.g);
+  setFieldValue($("bInput"), parsed.b);
   if (forceNormalize) {
-    $("hexInput").value = parsed.hex;
+    setFieldValue($("hexInput"), parsed.hex);
   }
   return true;
 }
 
 function syncHexFromRGB() {
-  const r = clamp(Number($("rInput").value || 0), 0, 255);
-  const g = clamp(Number($("gInput").value || 0), 0, 255);
-  const b = clamp(Number($("bInput").value || 0), 0, 255);
-  $("rInput").value = String(clamp8(r));
-  $("gInput").value = String(clamp8(g));
-  $("bInput").value = String(clamp8(b));
-  $("hexInput").value = rgbToHex(r, g, b);
+  const r = clamp(Number(fieldValue($("rInput")) || 0), 0, 255);
+  const g = clamp(Number(fieldValue($("gInput")) || 0), 0, 255);
+  const b = clamp(Number(fieldValue($("bInput")) || 0), 0, 255);
+  setFieldValue($("rInput"), clamp8(r));
+  setFieldValue($("gInput"), clamp8(g));
+  setFieldValue($("bInput"), clamp8(b));
+  setFieldValue($("hexInput"), rgbToHex(r, g, b));
 }
 
 function getRGBTargetFromUI(strict = false) {
   if (strict) syncRGBFromHex(true);
   return {
-    r: clamp8(Number($("rInput").value || 0)),
-    g: clamp8(Number($("gInput").value || 0)),
-    b: clamp8(Number($("bInput").value || 0))
+    r: clamp8(Number(fieldValue($("rInput")) || 0)),
+    g: clamp8(Number(fieldValue($("gInput")) || 0)),
+    b: clamp8(Number(fieldValue($("bInput")) || 0))
   };
+}
+
+function applyTargetRGB(r, g, b) {
+  setFieldValue($("rInput"), clamp8(r));
+  setFieldValue($("gInput"), clamp8(g));
+  setFieldValue($("bInput"), clamp8(b));
+  setFieldValue($("hexInput"), rgbToHex(r, g, b));
+  updateMiniSwatch();
 }
 
 function updateMiniSwatch() {
   const swatch = $("miniSwatch");
   try {
-    const parsed = tryParseCompleteHex($("hexInput").value);
+    const parsed = tryParseCompleteHex(fieldValue($("hexInput")));
     const t = parsed || getRGBTargetFromUI(false);
     swatch.style.background = `rgb(${t.r}, ${t.g}, ${t.b})`;
   } catch (err) {
     swatch.style.background = "#808080";
   }
-  updateTargetMeta();
-}
-
-function updateTargetMeta() {
-  const meta = $("targetMeta");
-  if (!meta) return;
-  const parsed = tryParseCompleteHex($("hexInput").value);
-  if (parsed) {
-    meta.textContent = `RGB ${parsed.hex}`;
-  } else {
-    const t = getRGBTargetFromUI(false);
-    meta.textContent = `RGB ${rgbToHex(t.r, t.g, t.b)}`;
-  }
-}
-
-function updateRangeMeta() {
-  const pct = clamp(Number($("tolerancePct").value || 0), 0, 100);
-  $("rangeMeta").textContent = `${pct}%`;
 }
 
 function getUIOptions() {
-  const tolerancePct = clamp(Number($("tolerancePct").value || 0), 0, 100);
+  const tolerancePct = getTolerancePct();
   const target = getRGBTargetFromUI(true);
   return {
     tolerancePct,
@@ -172,53 +180,86 @@ function applyForegroundColorToUI() {
   if (!fg) {
     throw new Error("Could not read Photoshop foreground color.");
   }
-  const r = clamp8(fg.rgb.red);
-  const g = clamp8(fg.rgb.green);
-  const b = clamp8(fg.rgb.blue);
-  $("rInput").value = String(r);
-  $("gInput").value = String(g);
-  $("bInput").value = String(b);
-  $("hexInput").value = rgbToHex(r, g, b);
-  updateMiniSwatch();
+  applyTargetRGB(fg.rgb.red, fg.rgb.green, fg.rgb.blue);
+}
+
+function setReadyState(state, title, detail) {
+  const box = $("readyBox");
+  box.dataset.state = state;
+  $("readyTitle").textContent = title;
+  $("readyDetail").textContent = detail;
 }
 
 async function refreshDocInfo() {
-  const info = $("docInfo");
-  const meta = $("docMeta");
   const runBtn = $("runBtn");
 
   try {
     const doc = app.activeDocument;
     if (!doc) {
-      info.textContent = "No document is open.";
-      meta.textContent = "No document";
+      setReadyState(
+        "blocked",
+        "No document open",
+        "Open an RGB Photoshop document to begin."
+      );
       runBtn.disabled = true;
       return;
     }
 
     const modeName = getDocModeName(doc.mode);
     const layers = doc.activeLayers;
-    let layerText = "No layer selected";
-    let ok = false;
 
-    if (layers && layers.length === 1) {
-      const layer = layers[0];
-      layerText = layer.name;
-      ok = isSupportedLayer(layer) && isSupportedDocMode(doc.mode);
-    } else if (layers && layers.length > 1) {
-      layerText = "Select exactly one layer";
+    if (!isSupportedDocMode(doc.mode)) {
+      setReadyState(
+        "blocked",
+        `${modeName} documents are not supported`,
+        "Convert the document to RGB Color, then select one unlocked pixel layer."
+      );
+      runBtn.disabled = true;
+      return;
     }
 
-    const supportText = isSupportedDocMode(doc.mode)
-      ? "Supported document mode."
-      : "Only RGB documents are supported.";
+    if (!layers || layers.length === 0) {
+      setReadyState(
+        "blocked",
+        "Select a layer",
+        "Choose one unlocked normal pixel layer."
+      );
+      runBtn.disabled = true;
+      return;
+    }
 
-    info.textContent = `Mode: ${modeName}\nLayer: ${layerText}\n${supportText}`;
-    meta.textContent = `${modeName} | ${layerText}`;
-    runBtn.disabled = !ok;
+    if (layers.length > 1) {
+      setReadyState(
+        "blocked",
+        "Too many layers selected",
+        "Select exactly one unlocked normal pixel layer."
+      );
+      runBtn.disabled = true;
+      return;
+    }
+
+    const layer = layers[0];
+    if (!isSupportedLayer(layer)) {
+      const why = layer.isBackgroundLayer
+        ? "Duplicate the Background layer into a normal layer first."
+        : "Use an unlocked normal pixel layer — not a group, smart object, text, or adjustment.";
+      setReadyState("blocked", `“${layer.name}” can’t be used`, why);
+      runBtn.disabled = true;
+      return;
+    }
+
+    setReadyState(
+      "ready",
+      "Ready",
+      `${modeName} · ${layer.name}`
+    );
+    runBtn.disabled = false;
   } catch (err) {
-    info.textContent = `Could not inspect document: ${err.message || err}`;
-    meta.textContent = "Inspect error";
+    setReadyState(
+      "blocked",
+      "Could not inspect document",
+      String(err.message || err)
+    );
     runBtn.disabled = true;
   }
 }
@@ -268,10 +309,10 @@ function unmixFromTargetRGB(r, g, b, srcAlpha, targetRGB, options) {
   const match = getToleranceMatch(original, targetRGB, options.tolerancePct);
   const effective = match > 0
     ? [
-        r + (targetRGB.r - r) * match,
-        g + (targetRGB.g - g) * match,
-        b + (targetRGB.b - b) * match
-      ]
+      r + (targetRGB.r - r) * match,
+      g + (targetRGB.g - g) * match,
+      b + (targetRGB.b - b) * match
+    ]
     : original;
 
   const target = [targetRGB.r, targetRGB.g, targetRGB.b];
@@ -297,7 +338,7 @@ function unmixFromTargetRGB(r, g, b, srcAlpha, targetRGB, options) {
 async function runColorUnmix() {
   const doc = app.activeDocument;
   if (!doc) throw new Error("No document is open.");
-  if (!isSupportedDocMode(doc.mode)) throw new Error("This version supports RGB documents only.");
+  if (!isSupportedDocMode(doc.mode)) throw new Error("Convert the document to RGB Color first.");
 
   const layers = doc.activeLayers;
   if (!layers || layers.length !== 1) throw new Error("Select exactly one layer.");
@@ -315,12 +356,12 @@ async function runColorUnmix() {
 
     try {
       executionContext.reportProgress({ value: 0.02, commandName: "Color Unmix" });
-      setStatus("Duplicating layer...");
+      setStatus("Duplicating layer…", "busy");
       const dup = await src.duplicate();
       dup.name = `${src.name}_unmix`;
 
       executionContext.reportProgress({ value: 0.08, commandName: "Color Unmix" });
-      setStatus("Reading pixels...");
+      setStatus("Reading pixels…", "busy");
       const imageObj = await imaging.getPixels({
         documentID: doc.id,
         layerID: dup.id,
@@ -345,7 +386,7 @@ async function runColorUnmix() {
       let processedPixels = 0;
       let changedPixels = 0;
 
-      setStatus("Processing pixels...");
+      setStatus("Removing color…", "busy");
 
       for (let i = 0, j = 0; i < pixelData.length; i += components, j += 4) {
         if (executionContext.isCancelled) return;
@@ -371,7 +412,7 @@ async function runColorUnmix() {
       }
 
       executionContext.reportProgress({ value: 0.9, commandName: "Color Unmix" });
-      setStatus("Writing pixels...");
+      setStatus("Writing pixels…", "busy");
 
       outImage = await imaging.createImageDataFromBuffer(out, {
         width,
@@ -394,14 +435,16 @@ async function runColorUnmix() {
       });
 
       executionContext.reportProgress({ value: 1, commandName: "Color Unmix" });
-      setStatus(`Done. ${changedPixels} pixels changed. Target ${options.targetLabel}. Tolerance ${options.tolerancePct}%.`);
+      setStatus(
+        `Done. Created “${dup.name}” · ${changedPixels.toLocaleString()} pixels changed · ${options.targetLabel} @ ${options.tolerancePct}%`,
+        "ok"
+      );
     } finally {
       if (psImage) psImage.dispose();
       if (outImage) outImage.dispose();
     }
   }, { commandName: "Color Unmix" });
 }
-
 
 async function maskFromTransparencyOnly() {
   const doc = app.activeDocument;
@@ -415,7 +458,7 @@ async function maskFromTransparencyOnly() {
   if (src.isBackgroundLayer) throw new Error("Background layer is not supported for mask from transparency.");
 
   await core.executeAsModal(async () => {
-    setStatus("Applying mask from transparency...");
+    setStatus("Building layer mask from transparency…", "busy");
     await action.batchPlay(
       [
         {
@@ -427,41 +470,53 @@ async function maskFromTransparencyOnly() {
       ],
       { synchronousExecution: true }
     );
-    setStatus("Done. Mask from transparency applied.");
+    setStatus(`Mask applied to “${src.name}”.`, "ok");
   }, { commandName: "Mask from Transparency" });
 }
 
-function bindSectionToggles() {
-  document.querySelectorAll("[data-toggle]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const id = btn.dataset.toggle;
-      const section = $(id);
-      if (section) section.classList.toggle("collapsed");
-    });
-  });
+function bindDocListeners() {
+  if (document.body.dataset.docListening) return;
+  document.body.dataset.docListening = "1";
+
+  try {
+    action.addNotificationListener(
+      [
+        { event: "select" },
+        { event: "open" },
+        { event: "close" },
+        { event: "new" },
+        { event: "make" },
+        { event: "duplicate" },
+        { event: "delete" },
+        { event: "modeChange" },
+        { event: "historyStateChanged" }
+      ],
+      () => {
+        refreshDocInfo().catch(() => {});
+      }
+    );
+  } catch (err) {
+    // Notification API availability varies by host version; Refresh still works.
+  }
 }
 
 function bindUI() {
   if (document.body.dataset.bound) return;
   document.body.dataset.bound = "1";
 
-  bindSectionToggles();
-
   $("hexInput").addEventListener("input", () => {
     const ok = syncRGBFromHex(false);
-    if (ok) {
-      updateMiniSwatch();
-    } else {
-      $("targetMeta").textContent = "RGB invalid";
-    }
+    updateMiniSwatch();
+    if (!ok) setStatus("Keep typing a hex color…", "busy");
   });
 
   $("hexInput").addEventListener("change", () => {
     try {
       syncRGBFromHex(true);
       updateMiniSwatch();
+      setStatus("Target color updated.", "idle");
     } catch (err) {
-      setStatus(`Error: ${err.message || err}`);
+      setStatus(String(err.message || err), "error");
     }
   });
 
@@ -470,39 +525,52 @@ function bindUI() {
       syncHexFromRGB();
       updateMiniSwatch();
     });
+    $(id).addEventListener("change", () => {
+      syncHexFromRGB();
+      updateMiniSwatch();
+    });
   });
 
-  $("toleranceRange").addEventListener("input", () => syncToleranceInputs("range"));
-  $("tolerancePct").addEventListener("input", () => syncToleranceInputs("number"));
+  $("toleranceRange").addEventListener("input", updateRangeMeta);
+  $("toleranceRange").addEventListener("change", updateRangeMeta);
 
   $("useFgBtn").addEventListener("click", () => {
     try {
       applyForegroundColorToUI();
-      setStatus("Foreground color loaded.");
+      setStatus("Loaded Photoshop foreground color.", "ok");
     } catch (err) {
-      setStatus(`Error: ${err.message || err}`);
+      setStatus(String(err.message || err), "error");
     }
+  });
+
+  document.querySelectorAll(".preset").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const parsed = tryParseCompleteHex(btn.dataset.hex);
+      if (!parsed) return;
+      applyTargetRGB(parsed.r, parsed.g, parsed.b);
+      setStatus(`Target set to ${parsed.hex}.`, "idle");
+    });
   });
 
   $("refreshBtn").addEventListener("click", async () => {
     try {
-      setStatus("Refreshing...");
+      setStatus("Checking document…", "busy");
       await refreshDocInfo();
-      setStatus("Idle.");
+      setStatus("Ready when your layer is.", "idle");
     } catch (err) {
-      setStatus(`Error: ${err.message || err}`);
+      setStatus(String(err.message || err), "error");
     }
   });
 
   $("runBtn").addEventListener("click", async () => {
     try {
-      setStatus("Starting...");
+      setStatus("Starting…", "busy");
       await refreshDocInfo();
       await runColorUnmix();
       await refreshDocInfo();
     } catch (err) {
       console.error(err);
-      setStatus(`Error: ${err.message || err}`);
+      setStatus(String(err.message || err), "error");
     }
   });
 
@@ -513,13 +581,14 @@ function bindUI() {
       await refreshDocInfo();
     } catch (err) {
       console.error(err);
-      setStatus(`Error: ${err.message || err}`);
+      setStatus(String(err.message || err), "error");
     }
   });
 
   syncHexFromRGB();
-  syncToleranceInputs("number");
+  updateRangeMeta();
   updateMiniSwatch();
+  bindDocListeners();
 }
 
 entrypoints.setup({
@@ -528,7 +597,7 @@ entrypoints.setup({
       show() {
         bindUI();
         refreshDocInfo().catch((err) => {
-          setStatus(`Error: ${err.message || err}`);
+          setStatus(String(err.message || err), "error");
         });
       }
     }
